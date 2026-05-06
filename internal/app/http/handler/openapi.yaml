@@ -20,8 +20,86 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
               example:
                 status: OK
+  /orders:
+    get:
+      summary: List orders
+      operationId: listOrders
+      tags:
+        - Orders
+      responses:
+        "200":
+          description: Orders list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrdersResponse"
+    post:
+      summary: Create order
+      operationId: createOrder
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+            example:
+              username: ilarious
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "400":
+          description: Invalid request
+        "500":
+          description: Internal server error
 components:
   schemas:
+    CreateOrderRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          example: ilarious
+    OrderResponse:
+      type: object
+      required:
+        - id
+        - username
+        - full_name
+        - followers_count
+        - status
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: ilarious
+        full_name:
+          type: string
+          example: ""
+        followers_count:
+          type: integer
+          example: 0
+        status:
+          type: integer
+          example: 0
+    ListOrdersResponse:
+      type: object
+      required:
+        - orders
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderResponse"
     HealthResponse:
       type: object
       required:

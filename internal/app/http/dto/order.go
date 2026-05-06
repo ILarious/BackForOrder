@@ -11,3 +11,7 @@ type OrderResponse struct {
 	FollowersCount int    `json:"followers_count"`
 	Status         int    `json:"status"`
 }
+
+type ListOrdersResponse struct {
+	Orders []OrderResponse `json:"orders"`
+}
