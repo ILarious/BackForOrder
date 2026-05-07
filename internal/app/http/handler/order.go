@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/ILarious/BackForOrder/internal/app/http/dto"
+	domainerrors "github.com/ILarious/BackForOrder/internal/domain/errors"
 	"github.com/ILarious/BackForOrder/internal/domain/model"
-	"github.com/ILarious/BackForOrder/internal/domain/service"
 )
 
 type OrderService interface {
@@ -33,7 +33,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	order, err := h.Orders.Create(r.Context(), request.Username)
 	if err != nil {
-		if errors.Is(err, service.ErrEmptyUsername) {
+		if errors.Is(err, domainerrors.ErrEmptyUsername) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}

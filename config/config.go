@@ -13,6 +13,19 @@ const defaultServerPort = "8080"
 type Config struct {
 	ServerPort string
 	Postgres   postgres.Config
+	Kafka      KafkaConfig
+	WorkerPool WorkerPoolConfig
+}
+
+type KafkaConfig struct {
+	Brokers              []string
+	OrderRequestTopic    string
+	OrderResponseTopic   string
+	OrderResponseGroupID string
+}
+
+type WorkerPoolConfig struct {
+	Size int
 }
 
 func Load() Config {
@@ -29,6 +42,15 @@ func Load() Config {
 			SSLMode:      envOrDefault("POSTGRES_SSLMODE", "disable"),
 			MaxOpenConns: envIntOrDefault("POSTGRES_MAX_OPEN_CONNS", 20),
 			MaxIdleConns: envIntOrDefault("POSTGRES_MAX_IDLE_CONNS", 20),
+		},
+		Kafka: KafkaConfig{
+			Brokers:              []string{envOrDefault("KAFKA_BROKER", "localhost:9092")},
+			OrderRequestTopic:    envOrDefault("KAFKA_ORDER_REQUEST_TOPIC", "vk-blogger-orders"),
+			OrderResponseTopic:   envOrDefault("KAFKA_ORDER_RESPONSE_TOPIC", "vk-blogger-results"),
+			OrderResponseGroupID: envOrDefault("KAFKA_ORDER_RESPONSE_GROUP_ID", "back-for-order"),
+		},
+		WorkerPool: WorkerPoolConfig{
+			Size: envIntOrDefault("WORKER_POOL_SIZE", 4),
 		},
 	}
 }

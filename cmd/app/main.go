@@ -2,7 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ILarious/BackForOrder/config"
@@ -37,7 +41,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create order repository: %v", err)
 	}
+
 	orderService := service.NewOrderService(orderRepository)
+
+	appCtx, stopApp := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopApp()
 
 	healthHandler := handler.NewHealth()
 	openAPIHandler := handler.NewOpenAPI()
@@ -45,7 +53,24 @@ func main() {
 	router := httpapp.NewRouter(healthHandler, openAPIHandler, orderHandler)
 	srv := httpapp.NewServer(router)
 
-	if err := srv.Run(cfg.ServerPort); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+	serverErr := make(chan error, 1)
+	go func() {
+		serverErr <- srv.Run(cfg.ServerPort)
+	}()
+
+	select {
+	case <-appCtx.Done():
+	case err := <-serverErr:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("failed to start server: %v", err)
+		}
 	}
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelShutdown()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("failed to shutdown server: %v", err)
+	}
+
+	stopApp()
 }

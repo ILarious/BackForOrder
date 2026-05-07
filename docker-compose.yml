@@ -11,6 +11,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - back-for-order-net
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: back-for-order-worker
+    command: ["/app/back-for-order-worker"]
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - back-for-order-net
     restart: unless-stopped
 
   postgres:
@@ -26,6 +43,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - back-for-order-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -35,3 +54,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  back-for-order-net:
+    external: true
