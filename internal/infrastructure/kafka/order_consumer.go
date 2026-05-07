@@ -70,13 +70,7 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, message kafka.Message
 		return err
 	}
 
-	messageID := response.EventID
-	if messageID == "" {
-		messageID = string(message.Key)
-	}
-	if messageID == "" {
-		messageID = fmt.Sprintf("%s:%d:%d", message.Topic, message.Partition, message.Offset)
-	}
+	messageID := orderResultMessageID(response, message)
 
 	if err := c.handler.ProcessBloggerInfo(
 		ctx,
@@ -91,6 +85,17 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, message kafka.Message
 	}
 
 	return c.reader.CommitMessages(ctx, message)
+}
+
+func orderResultMessageID(response OrderResponse, message kafka.Message) string {
+	if response.EventID != "" {
+		return response.EventID
+	}
+	if len(message.Key) > 0 {
+		return string(message.Key)
+	}
+
+	return fmt.Sprintf("%s:%d:%d", message.Topic, message.Partition, message.Offset)
 }
 
 func (c *OrderConsumer) Close() error {

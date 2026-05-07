@@ -27,17 +27,7 @@ func NewOrderProducer(brokers []string, topic string) *OrderProducer {
 }
 
 func (p *OrderProducer) PublishOutboxEvent(ctx context.Context, event model.OutboxEvent) error {
-	var request OrderRequest
-	if err := json.Unmarshal(event.Payload, &request); err != nil {
-		return err
-	}
-	request.EventID = event.ID
-
-	payload, err := json.Marshal(OrderRequest{
-		EventID:  request.EventID,
-		OrderID:  request.OrderID,
-		Username: request.Username,
-	})
+	payload, err := orderRequestPayload(event)
 	if err != nil {
 		return err
 	}
@@ -52,6 +42,20 @@ func (p *OrderProducer) PublishOutboxEvent(ctx context.Context, event model.Outb
 			{Key: "event_id", Value: []byte(strconv.FormatInt(event.ID, 10))},
 			{Key: "event_type", Value: []byte(event.EventType)},
 		},
+	})
+}
+
+func orderRequestPayload(event model.OutboxEvent) ([]byte, error) {
+	var request OrderRequest
+	if err := json.Unmarshal(event.Payload, &request); err != nil {
+		return nil, err
+	}
+	request.EventID = event.ID
+
+	return json.Marshal(OrderRequest{
+		EventID:  request.EventID,
+		OrderID:  request.OrderID,
+		Username: request.Username,
 	})
 }
 
