@@ -46,6 +46,24 @@ services:
       - back-for-order-net
     restart: unless-stopped
 
+  kafka-init:
+    image: apache/kafka:3.7.0
+    container_name: back-for-order-kafka-init
+    env_file:
+      - .env
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic "$${KAFKA_ORDER_REQUEST_TOPIC}" --partitions 1 --replication-factor 1
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic "$${KAFKA_ORDER_RESPONSE_TOPIC}" --partitions 1 --replication-factor 1
+    networks:
+      - back-for-order-net
+    restart: "no"
+
 volumes:
   kafka_data:
 
